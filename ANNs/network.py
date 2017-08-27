@@ -39,8 +39,8 @@ class Network:
         self.biases = [np.random.randn(y) for y in shape[1:]]
         self.weights = [np.random.randn(y, x) for x, y in zip(shape[:-1], shape[1:])]
 
-    def large_weight_initializer(self):
-        pass
+    # def large_weight_initializer(self):
+    #     pass
 
     def feedforward(self, x, save_activations=False):
         a = x
@@ -76,26 +76,25 @@ class Network:
                         for x, y in test_data]
         return sum(int(h == y) for h, y in test_results)
 
-    def SGD(self, data_train, epochs, minibatch_size, eta,
+    def SGD(self, epochs, minibatch_size, eta,
+            training_data, evaluation_data,
             cost=CrossEntropyCost,
             normalization=None,
-            evaluation_data=None,
             monitor_evaluation_accuracy=True):
         self.cost_derivative = cost
         self.normalization_derivative = normalization
 
-        if evaluation_data:
-            n_test = len(evaluation_data)
-        n_train = len(data_train)
+        n_train = len(training_data)
+        n_test = len(evaluation_data)
 
         from datetime import datetime
         time_start = datetime.now()
         for j in range(epochs):
-            random.shuffle(data_train)
+            random.shuffle(training_data)
             for k in range(0, n_train, minibatch_size):
-                minibatch = data_train[k:k+minibatch_size]
+                minibatch = training_data[k:k+minibatch_size]
                 self.minibatch_update(minibatch, eta)
-            if evaluation_data:
+            if monitor_evaluation_accuracy:
                 print('Epoch {}: {} / {}.'
                       .format(j+1, self.evaluate(evaluation_data), n_test))
             else:
