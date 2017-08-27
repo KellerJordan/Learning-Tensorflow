@@ -15,11 +15,14 @@ def sigmoid_prime(a):
     return a * (1 - a) # sigmoid
 
 ## cost functions ---------------------------------------------------------------------------------
+## return the derivative of C with respect to z^L
 def QuadraticCost(h, y):
-    return h - y
+    return (h - y) * sigmoid_prime(h) # del_C_wrt_z^L
+    # return h - y # del_C_wrt_h
 
 def CrossEntropyCost(h, y):
-    return (h - y) / (h * (1 - h))
+    return h - y # del_C_wrt_z^L
+    # return (h - y) / (h * (1 - h)) # del_C_wrt_h
 
 ## normalization functions ------------------------------------------------------------------------
 def L2Normalizer(lmbda):
@@ -51,24 +54,21 @@ class Network:
 
     # uses denominator layout for matrix calculus
     def backpropagate(self, x, y):
-        # feedforward, saving activations
-        activations = self.feedforward(x, save_activations=True)
-        h = activations[-1]
-        # backpropagation
-        del_h_wrt_z = sigmoid_prime(h)
-        del_E_wrt_z = self.cost_derivative(h, y) * del_h_wrt_z
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
-        nabla_b[-1] = del_E_wrt_z
-        nabla_w[-1] = np.outer(del_E_wrt_z, activations[-2])
-        for l in range(2, self.num_layers):
-            a = activations[-l]
-            del_E_wrt_a = np.matmul(self.weights[-l+1].transpose(), del_E_wrt_z)
-            del_a_wrt_z = sigmoid_prime(a)
-            del_E_wrt_z = del_E_wrt_a * del_a_wrt_z
-            nabla_b[-l] = del_E_wrt_z
-            nabla_w[-l] = np.outer(del_E_wrt_z, activations[-l-1])
+        # feedforward, saving activations
+        activations = self.feedforward(x, save_activations=True)
+        h = activations[-1] # hypothesis
+        # backpropagation
+        del_C_wrt_z = self.cost_derivative(h, y)
+        for l in range(1, self.num_layers):
+            nabla_b[-l] = del_C_wrt_z
+            nabla_w[-l] = np.outer(del_C_wrt_z, activations[-l-1])
             nabla_w[-l] += self.normalization_derivative(nabla_w[-l])
+            if l < self.num_layers - 1:
+                del_C_wrt_a = np.matmul(self.weights[-l].transpose(), del_C_wrt_z)
+                a = activations[-l-1]
+                del_C_wrt_z = del_C_wrt_a * sigmoid_prime(a)
         return (nabla_b, nabla_w)
 
     def evaluate(self, test_data):
