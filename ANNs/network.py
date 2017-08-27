@@ -107,9 +107,11 @@ class Network:
     def minibatch_update(self, minibatch, eta):
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
+        # sum the derivatives of w with respect to cost over all training examples in batch
         for x, y in minibatch:
             delta_nabla_b, delta_nabla_w = self.backpropagate(x, y)
             nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+        # update accordingly
         self.weights = [w - (eta/len(minibatch))*nw for w, nw in zip(self.weights, nabla_w)]
         self.biases = [b - (eta/len(minibatch))*nb for b, nb in zip(self.biases, nabla_b)]
