@@ -5,16 +5,36 @@ import sys
 from pprint import pprint
 
 
+## math functions ---------------------------------------------------------------------------------
+def sigmoid(z):
+    # return z * (z > 0) # ReLU
+    return 1.0 / (1.0 + np.exp(-z)) # sigmoid
+
+def sigmoid_prime(a):
+    # return 1 * (a > 0) # ReLU
+    return a * (1 - a) # sigmoid
+
+## cost functions ---------------------------------------------------------------------------------
+def QuadraticCost(h, y):
+    return h - y
+
+def CrossEntropyCost(h, y):
+    return (h - y) / (h * (1 - h))
+
+## normalization functions ------------------------------------------------------------------------
+def L2Normalizer(lmbda):
+    return lambda w: lmbda * w
+
+## artificial neural network ----------------------------------------------------------------------
 class Network:
 
     SEED = 3
 
-    def __init__(self, sizes, cost):
-        self.num_layers = len(sizes)
+    def __init__(self, shape):
+        self.num_layers = len(shape)
         np.random.seed(self.SEED)
-        self.biases = [np.random.randn(y) for y in sizes[1:]]
-        self.weights = [np.random.randn(y, x) for x, y in zip(sizes[:-1], sizes[1:])]
-        self.cost_derivative = cost
+        self.biases = [np.random.randn(y) for y in shape[1:]]
+        self.weights = [np.random.randn(y, x) for x, y in zip(shape[:-1], shape[1:])]
 
     def large_weight_initializer(self):
         pass
@@ -30,7 +50,7 @@ class Network:
         return activations if save_activations else a
 
     # uses denominator layout for matrix calculus
-    def backprop(self, x, y):
+    def backpropagate(self, x, y):
         # feedforward, saving activations
         activations = self.feedforward(x, save_activations=True)
         h = activations[-1]
@@ -48,6 +68,7 @@ class Network:
             del_E_wrt_z = del_E_wrt_a * del_a_wrt_z
             nabla_b[-l] = del_E_wrt_z
             nabla_w[-l] = np.outer(del_E_wrt_z, activations[-l-1])
+            nabla_w[-l] += self.normalization_derivative(nabla_w[-l])
         return (nabla_b, nabla_w)
 
     def evaluate(self, test_data):
@@ -56,13 +77,19 @@ class Network:
         return sum(int(h == y) for h, y in test_results)
 
     def SGD(self, data_train, epochs, minibatch_size, eta,
+            cost=CrossEntropyCost,
+            normalization=None,
             evaluation_data=None,
             monitor_evaluation_accuracy=True):
-        from datetime import datetime
-        time_start = datetime.now()
+        self.cost_derivative = cost
+        self.normalization_derivative = normalization
+
         if evaluation_data:
             n_test = len(evaluation_data)
         n_train = len(data_train)
+
+        from datetime import datetime
+        time_start = datetime.now()
         for j in range(epochs):
             random.shuffle(data_train)
             for k in range(0, n_train, minibatch_size):
@@ -81,24 +108,8 @@ class Network:
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         for x, y in minibatch:
-            delta_nabla_b, delta_nabla_w = self.backprop(x, y)
+            delta_nabla_b, delta_nabla_w = self.backpropagate(x, y)
             nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
         self.weights = [w - (eta/len(minibatch))*nw for w, nw in zip(self.weights, nabla_w)]
         self.biases = [b - (eta/len(minibatch))*nb for b, nb in zip(self.biases, nabla_b)]
-
-## math functions ---------------------------------------------------------------------------------
-def sigmoid(z):
-    # return z * (z > 0) # ReLU
-    return 1.0 / (1.0 + np.exp(-z)) # sigmoid
-
-def sigmoid_prime(a):
-    # return 1 * (a > 0) # ReLU
-    return a * (1 - a) # sigmoid
-
-## cost functions ---------------------------------------------------------------------------------
-def QuadraticCost(h, y):
-        return h - y
-
-def CrossEntropyCost(h, y):
-    return (h - y) / (h * (1 - h))
