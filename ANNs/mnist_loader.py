@@ -6,8 +6,8 @@ def load_data():
     with gzip.open('../data/mnist.pkl.gz', 'rb') as f:
         tr_d, va_d, te_d = pickle.load(f, encoding='latin1')
     training_data = format_data(tr_d, vectorize=True)
-    validation_data = format_data(va_d)
-    test_data = format_data(te_d)
+    validation_data = format_data(va_d, vectorize=True)
+    test_data = format_data(te_d, vectorize=True)
     return training_data, validation_data, test_data
 
 def format_data(data, vectorize=False):
