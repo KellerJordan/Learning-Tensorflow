@@ -41,7 +41,7 @@ def sigmoid_prime(a):
 class QuadraticCost:
     @staticmethod
     def fn(h, y):
-        return 0.5*np.linalg.norm(h - y)**2
+        return 0.5 * np.linalg.norm(h - y)**2
     @staticmethod
     def delta(h, y):
         return (h - y) * sigmoid_prime(h)
@@ -49,16 +49,24 @@ class QuadraticCost:
 class CrossEntropyCost:
     @staticmethod
     def fn(h, y):
-        return np.sum(np.nan_to_num(-y*np.log(h) - (1-y)*np.log(1-h)))
+        return np.sum(-np.nan_to_num(y * np.log(h) + (1 - y) * np.log(1 - h)))
     @staticmethod
     def delta(h, y):
         return h - y
 
-class L2Normalizer:
+class L1Regularizer:
     def __init__(self, lmbda):
         self.lmbda = lmbda
     def fn(self, w):
-        return 0.5*self.lmbda*np.linalg.norm(w)**2
+        return self.lmbda * np.abs(w)
+    def delta(self, w):
+        return self.lmbda * np.sign(w)
+
+class L2Regularizer:
+    def __init__(self, lmbda):
+        self.lmbda = lmbda
+    def fn(self, w):
+        return 0.5 * self.lmbda * np.linalg.norm(w)**2
     def delta(self, w):
         return self.lmbda * w
 
@@ -183,6 +191,7 @@ class Network:
 
         return evaluation_cost, evaluation_accuracy, training_cost, training_accuracy
 
+    # could use numpy.save for parameters instead
     def save(self, filename):
         data = {'shape': self.shape,
                 'weights': [w.tolist() for w in self.weights],

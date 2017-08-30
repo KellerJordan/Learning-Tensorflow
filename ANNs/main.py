@@ -6,7 +6,7 @@ def main():
     import network
     net = network.Network([784, 30, 10],
                           cost=network.CrossEntropyCost,
-                          norm=network.L2Normalizer(lmbda=5.0))
+                          norm=network.L2Regularizer(lmbda=5.0))
     _, evaluation_accuracy, _, _ = net.SGD(
         30, 10, .1,
         training_data, test_data,
