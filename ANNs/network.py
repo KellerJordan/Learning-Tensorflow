@@ -28,12 +28,13 @@ import sys
 
 ## math functions ---------------------------------------------------------------------------------
 def sigmoid(z):
+    clipped_z = np.clip(z, -500, 500)
+    return 1.0 / (1.0 + np.exp(-clipped_z)) # sigmoid
     # return z * (z > 0) # ReLU
-    return 1.0 / (1.0 + np.exp(-z)) # sigmoid
 
 def sigmoid_prime(a):
-    # return 1 * (a > 0) # ReLU
     return a * (1 - a) # sigmoid
+    # return 1 * (a > 0) # ReLU
 
 ## cost functions ---------------------------------------------------------------------------------
 ## fn(): returns the value of the cost incurred
