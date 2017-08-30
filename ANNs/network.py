@@ -1,5 +1,27 @@
+"""network.py
+Network class and helpers written while reading the http://neuralnetworksanddeeplearning.com ebook.
+
+Major differences between this and
+https://github.com/mnielsen/neural-networks-and-deep-learning/blob/master/src/network2.py
+are as follows:
+
+- Normalization is treated the same as cost, rather than being unseparable from the code.
+- backpropage() uses a call to feedforward(), rather than its own implementation. Accordingly,
+feedforward() contains the save_activations flag.
+- backpropage() uses a more linear algebra, and is more efficient generally in presentation and
+computation.
+- In cost functions and otherwise, the last layer of activations (a^L) is referred to as h,
+for `hypothesis`, instead.
+- Rather than dividing dC/dw by n when using to update weights, it is divided by m. I don't know
+why the ebook divides by n rather than the minibatch size in the first place!
+- SGD()'s execution duration is timed.
+
+"""
+
+
 import random
 import numpy as np
+import json
 
 import sys
 
@@ -19,7 +41,7 @@ def sigmoid_prime(a):
 class QuadraticCost:
     @staticmethod
     def fn(h, y):
-        return .5 * (h - y)**2
+        return 0.5*np.linalg.norm(h - y)**2
     @staticmethod
     def delta(h, y):
         return (h - y) * sigmoid_prime(h)
@@ -27,7 +49,7 @@ class QuadraticCost:
 class CrossEntropyCost:
     @staticmethod
     def fn(h, y):
-        return -(y * np.log(h) + (1 - y) * np.log(1 - h)).sum()
+        return np.sum(np.nan_to_num(-y*np.log(h) - (1-y)*np.log(1-h)))
     @staticmethod
     def delta(h, y):
         return h - y
@@ -36,8 +58,7 @@ class L2Normalizer:
     def __init__(self, lmbda):
         self.lmbda = lmbda
     def fn(self, w):
-        return 0.5 * self.lmbda * np.linalg.norm(w)**2
-        # return .5 * self.lmbda * np.dot(w, w)
+        return 0.5*self.lmbda*np.linalg.norm(w)**2
     def delta(self, w):
         return self.lmbda * w
 
@@ -141,23 +162,42 @@ class Network:
             print('Epoch {} complete.'.format(j+1))
             if monitor_evaluation_cost:
                 cost = self.total_cost(data_eval)
-                print('Cost on evaluation data: {}'.format(cost))
                 evaluation_cost.append(cost)
+                print('Cost on evaluation data: {}'.format(cost))
             if monitor_evaluation_accuracy:
                 accuracy = self.accuracy(data_eval)
-                print('Accuracy on evaluation data: {} / {}'.format(accuracy, len(data_eval)))
                 evaluation_accuracy.append(accuracy)
+                print('Accuracy on evaluation data: {} / {}'.format(accuracy, len(data_eval)))
             if monitor_training_cost:
                 cost = self.total_cost(data_train)
-                print('Cost on training data: {}'.format(cost))
                 training_cost.append(cost)
+                print('Cost on training data: {}'.format(cost))
             if monitor_training_accuracy:
                 accuracy = self.accuracy(data_train)
-                print('Accuracy on training data: {} / {}'.format(accuracy, n_train))
                 training_accuracy.append(accuracy)
+                print('Accuracy on training data: {} / {}'.format(accuracy, n_train))
 
         time_end = datetime.now()
         time_delta = str(time_end - time_start).rsplit('.', 1)[0]
         print(time_delta)
 
         return evaluation_cost, evaluation_accuracy, training_cost, training_accuracy
+
+    def save(self, filename):
+        data = {'shape': self.shape,
+                'weights': [w.tolist() for w in self.weights],
+                'biases': [b.tolist() for b in self.biases],
+                'cost': self.cost.__name__,
+                'norm': self.norm.__name__}
+        with open(filename, 'w') as f:
+            json.dump(data, f)
+
+def load(filename):
+    with open(filename, 'r') as f:
+        data = json.load(f)
+    cost = getattr(sys.modules[__name__], data['cost'])
+    norm = getattr(sys.modules[__name__], data['norm'])
+    net = Network(data['shape'], cost=cost, norm=norm)
+    net.weights = [np.array(w) for w in data['weights']]
+    net.biases = [np.array(b) for b in data['biases']]
+    return net
