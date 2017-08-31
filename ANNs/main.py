@@ -10,7 +10,8 @@ def main():
     _, evaluation_accuracy, _, _ = net.SGD(
         30, 10, .1,
         training_data, test_data,
-        early_stopping=network.CustomEarlyStop(4, .33),
+        # early_stop=network.NoImprovementInN(10),
+        learning_rate_adjustment=network.NoImprovementInN(10),
         monitor_evaluation_accuracy=True)
 
     # from fig import plot

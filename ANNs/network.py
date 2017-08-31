@@ -183,9 +183,10 @@ class Network:
         complexity = sum([self.norm.fn(w) for w in self.weights])
         return (loss + complexity) / len(data)
 
-    def SGD(self, epochs, minibatch_size, eta,
+    def SGD(self, epochs, minibatch_size, eta_start,
             data_train, data_eval=None,
-            early_stopping=None,
+            early_stop=None,
+            learning_rate_adjustment=None,
             monitor_evaluation_cost=False,
             monitor_evaluation_accuracy=False,
             monitor_training_cost=False,
@@ -199,6 +200,7 @@ class Network:
         from datetime import datetime
         time_start = datetime.now()
 
+        eta = eta_start
         for j in range(epochs):
             random.shuffle(data_train)
             for k in range(0, n_train, minibatch_size):
@@ -213,8 +215,12 @@ class Network:
                 accuracy = self.accuracy(data_eval)
                 evaluation_accuracy.append(accuracy)
                 print('Accuracy on evaluation data: {} / {}'.format(accuracy, len(data_eval)))
-                if early_stopping.test(accuracy):
+                if early_stop and early_stop.test(accuracy):
                     break
+                if learning_rate_adjustment and learning_rate_adjustment.test(accuracy):
+                    if eta < eta_start / 128:
+                        break
+                    eta *= 0.5
             if monitor_training_cost:
                 cost = self.total_cost(data_train)
                 training_cost.append(cost)
