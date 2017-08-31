@@ -87,7 +87,10 @@ class NoImprovementInN:
             self.noimprove_count = 0
         else:
             self.noimprove_count += 1
-        return self.noimprove_count >= self.n
+        result = self.noimprove_count >= self.n
+        if result:
+            self.noimprove_count = 0
+        return result
 
 # test(): return true if no improvement for last beta*(epochs so far) + c epochs
 class CustomEarlyStop:
@@ -220,6 +223,7 @@ class Network:
                 if learning_rate_adjustment and learning_rate_adjustment.test(accuracy):
                     if eta < eta_start / 128:
                         break
+                    print('Halving eta due to lack of improvement.')
                     eta *= 0.5
             if monitor_training_cost:
                 cost = self.total_cost(data_train)
