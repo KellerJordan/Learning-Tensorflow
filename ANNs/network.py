@@ -75,25 +75,35 @@ class L2Regularizer:
         return self.lmbda * w
 
 ## early-stopping functions -----------------------------------------------------------------------
-## test(): returns true if accuracy passed to method has been lower than prev max n times
+## test(): returns true if no improvement for last n epochs
 class NoImprovementInN:
     def __init__(self, n):
         self.n = n
         self.max_accuracy = 0
-        self.count = 0
+        self.noimprove_count = 0
     def test(self, accuracy):
         if accuracy > self.max_accuracy:
             self.max_accuracy = accuracy
-            self.count = 0
+            self.noimprove_count = 0
         else:
-            self.count += 1
-        return count >= self.n
+            self.noimprove_count += 1
+        return self.noimprove_count >= self.n
 
+# test(): return true if no improvement for last beta*(epochs so far) epochs
 class CustomEarlyStop:
-    def __init__(self):
-        pass
+    def __init__(self, beta):
+        self.beta = beta
+        self.max_accuracy = 0
+        self.noimprove_count = 0
+        self.epoch_count = 0
     def test(self, accuracy):
-        return False
+        self.epoch_count += 1
+        if accuracy > self.max_accuracy:
+            self.max_accuracy = accuracy
+            self.noimprove_count = 0
+        else:
+            self.noimprove_count += 1
+        return self.noimprove_count >= self.beta * self.epoch_count
 
 ## artificial neural network ----------------------------------------------------------------------
 class Network:
