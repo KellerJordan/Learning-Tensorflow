@@ -36,9 +36,9 @@ def sigmoid_prime(a):
     return a * (1 - a) # sigmoid
     # return 1 * (a > 0) # ReLU
 
-## cost, normalization functions ------------------------------------------------------------------
+## cost functions ---------------------------------------------------------------------------------
 ## fn(): returns the value of the cost incurred
-## delta(): returns the derivative of C with respect to z^L or w respectively
+## delta(): returns the derivative of C with respect to z^L
 class QuadraticCost:
     @staticmethod
     def fn(h, y):
@@ -55,6 +55,9 @@ class CrossEntropyCost:
     def delta(h, y):
         return h - y
 
+## regularization functions -----------------------------------------------------------------------
+## fn(): returns the cost incurred
+## delta(): returns the value of C with respect to w
 class L1Regularizer:
     def __init__(self, lmbda):
         self.lmbda = lmbda
@@ -70,6 +73,27 @@ class L2Regularizer:
         return 0.5 * self.lmbda * np.linalg.norm(w)**2
     def delta(self, w):
         return self.lmbda * w
+
+## early-stopping functions -----------------------------------------------------------------------
+## test(): returns true if accuracy passed to method has been lower than prev max n times
+class NoImprovementInN:
+    def __init__(self, n):
+        self.n = n
+        self.max_accuracy = 0
+        self.count = 0
+    def test(self, accuracy):
+        if accuracy > self.max_accuracy:
+            self.max_accuracy = accuracy
+            self.count = 0
+        else:
+            self.count += 1
+        return count >= self.n
+
+class CustomEarlyStop:
+    def __init__(self):
+        pass
+    def test(self, accuracy):
+        return False
 
 ## artificial neural network ----------------------------------------------------------------------
 class Network:
@@ -149,7 +173,8 @@ class Network:
         return (loss + complexity) / len(data)
 
     def SGD(self, epochs, minibatch_size, eta,
-            data_train, data_eval,
+            data_train, data_eval=None,
+            early_stopping=None,
             monitor_evaluation_cost=False,
             monitor_evaluation_accuracy=False,
             monitor_training_cost=False,
@@ -169,14 +194,16 @@ class Network:
                 minibatch = data_train[k:k+minibatch_size]
                 self.minibatch_update(minibatch, eta)
             print('Epoch {} complete.'.format(j+1))
-            if monitor_evaluation_cost:
+            if monitor_evaluation_cost and data_eval:
                 cost = self.total_cost(data_eval)
                 evaluation_cost.append(cost)
                 print('Cost on evaluation data: {}'.format(cost))
-            if monitor_evaluation_accuracy:
+            if monitor_evaluation_accuracy and data_eval:
                 accuracy = self.accuracy(data_eval)
                 evaluation_accuracy.append(accuracy)
                 print('Accuracy on evaluation data: {} / {}'.format(accuracy, len(data_eval)))
+                if early_stopping.test(accuracy):
+                    break
             if monitor_training_cost:
                 cost = self.total_cost(data_train)
                 training_cost.append(cost)
