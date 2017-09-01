@@ -4,14 +4,16 @@ def main():
     import mnist_loader
     training_data, validation_data, test_data = mnist_loader.load_data()
     import network
+    import utils
     net = network.Network([784, 30, 10],
-                          cost=network.CrossEntropyCost,
-                          norm=network.L1Regularizer(lmbda=0.0001))
+                          init=utils.NormalWeightInitializer,
+                          cost=utils.CrossEntropyCost,
+                          norm=utils.L2Regularizer(lmbda=0.0001))
     _, evaluation_accuracy, _, _ = net.SGD(
-        30, 10, .1,
+        30, 10, .14,
         training_data, test_data,
-        # early_stop=network.NoImprovementInN(10),
-        learning_rate_adjustment=network.NoImprovementInN(10),
+        # early_stop=utils.NoImprovementInN(10),
+        # learning_rate_adjustment=utils.NoImprovementInN(10),
         monitor_evaluation_accuracy=True)
 
     # from fig import plot
