@@ -133,6 +133,7 @@ class Network:
                 if learning_rate_adjustment and learning_rate_adjustment.test(accuracy):
                     if eta < eta_start / 128:
                         break
+                    print('Halving eta due to lack of improvement.')
                     eta *= 0.5
             if monitor_training_cost:
                 cost = self.total_cost(data_train)

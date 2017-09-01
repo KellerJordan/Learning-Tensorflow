@@ -72,12 +72,16 @@ class NoImprovementInN:
             self.noimprove_count = 0
         else:
             self.noimprove_count += 1
-        return self.noimprove_count >= self.n
+        result = self.noimprove_count >= self.n
+        if result:
+            self.noimprove_count = 0
+        return result
 
-# test(): return true if no improvement for last beta*(epochs so far) epochs
+# test(): return true if no improvement for last beta*(epochs so far) + c epochs
 class CustomEarlyStop:
-    def __init__(self, beta):
+    def __init__(self, beta, c):
         self.beta = beta
+        self.c = c
         self.max_accuracy = 0
         self.noimprove_count = 0
         self.epoch_count = 0
@@ -88,4 +92,4 @@ class CustomEarlyStop:
             self.noimprove_count = 0
         else:
             self.noimprove_count += 1
-        return self.noimprove_count >= self.beta * self.epoch_count
+        return self.noimprove_count >= self.beta * self.epoch_count + self.c

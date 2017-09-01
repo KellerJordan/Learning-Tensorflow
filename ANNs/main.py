@@ -16,8 +16,8 @@ def main():
         # learning_rate_adjustment=utils.NoImprovementInN(10),
         monitor_evaluation_accuracy=True)
 
-    # from fig import plot
-    # plot(evaluation_accuracy)
+    from fig import plot
+    plot(evaluation_accuracy)
 
 
 if __name__ == '__main__':
