@@ -5,7 +5,7 @@ def main():
     training_data, validation_data, test_data = mnist_loader.load_data()
     import network
     import utils
-    net = network.Network([784, 30, 10],
+    net = network.Network([784, 30, 30, 30, 10],
                           init=utils.NormalWeightInitializer,
                           cost=utils.CrossEntropyCost,
                           norm=utils.L2Regularizer(lmbda=0.0001))

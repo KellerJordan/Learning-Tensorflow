@@ -74,7 +74,7 @@ class Network:
         for l in range(1, self.num_layers):
             nabla_b[-l] = del_C_wrt_z
             nabla_w[-l] = np.outer(del_C_wrt_z, activations[-l-1])
-            # nabla_w[-l] += 0.0001 * np.sign(nabla_w[-l])
+            nabla_w[-l] += 0.0001 * np.sign(nabla_w[-l])
             if self.norm: nabla_w[-l] += self.norm.delta(self.weights[-l])
             if l < self.num_layers - 1:
                 del_C_wrt_a = self.weights[-l].transpose() @ del_C_wrt_z
