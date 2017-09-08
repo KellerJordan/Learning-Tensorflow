@@ -2,8 +2,12 @@ import tempfile
 from six.moves import urllib
 train_file = tempfile.NamedTemporaryFile(delete=False)
 test_file = tempfile.NamedTemporaryFile(delete=False)
-urllib.request.urlretrieve("http://mlr.cs.umass.edu/ml/machine-learning-databases/adult/adult.data", train_file.name)
-urllib.request.urlretrieve("http://mlr.cs.umass.edu/ml/machine-learning-databases/adult/adult.test", test_file.name)
+urllib.request.urlretrieve(
+    "http://mlr.cs.umass.edu/ml/machine-learning-databases/adult/adult.data",
+    train_file.name)
+urllib.request.urlretrieve(
+    "http://mlr.cs.umass.edu/ml/machine-learning-databases/adult/adult.test",
+    test_file.name)
 
 import pandas as pd
 COLUMNS = ["age", "workclass", "fnlwgt", "education", "education_num",
@@ -64,10 +68,11 @@ education_x_occupation = tf.contrib.layers.crossed_column([education, occupation
 age_buckets_x_education_x_occupation = tf.contrib.layers.crossed_column([age_buckets, education, occupation], hash_bucket_size=int(1e6))
 
 model_dir = tempfile.mkdtemp()
-m = tf.contrib.learn.LinearClassifier(feature_columns=[
-  gender, native_country, education, occupation, workclass, marital_status, race,
-  age_buckets, education_x_occupation, age_buckets_x_education_x_occupation],
-  model_dir=model_dir)
+m = tf.contrib.learn.LinearClassifier(
+    feature_columns=[
+        gender, native_country, education, occupation, workclass, marital_status, race,
+        age_buckets, education_x_occupation, age_buckets_x_education_x_occupation],
+    model_dir=model_dir)
 
 m.fit(input_fn=train_input_fn, steps=200)
 results = m.evaluate(input_fn=eval_input_fn, steps=1)

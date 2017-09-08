@@ -2,15 +2,21 @@ import tempfile
 from six.moves import urllib
 train_file = tempfile.NamedTemporaryFile(delete=False)
 test_file = tempfile.NamedTemporaryFile(delete=False)
-urllib.request.urlretrieve("http://mlr.cs.umass.edu/ml/machine-learning-databases/voting-records/house-votes-84.data", train_file.name)
-urllib.request.urlretrieve("http://mlr.cs.umass.edu/ml/machine-learning-databases/voting-records/house-votes-84.data", test_file.name)
+urllib.request.urlretrieve(
+    "http://mlr.cs.umass.edu/ml/machine-learning-databases/voting-records/house-votes-84.data",
+    train_file.name)
+urllib.request.urlretrieve(
+    "http://mlr.cs.umass.edu/ml/machine-learning-databases/voting-records/house-votes-84.data",
+    test_file.name)
 
 import pandas as pd
-COLUMNS = ["political-affiliation",
-        "handicapped-infants", "water-project-cost-sharing", "adoption-of-the-budget-resolution",
-        "physician-fee-freeze", "el-salvador-aid", "religious-groups-in-schools", "anti-satellite-test-ban",
-        "aid-to-nicaraguan-contras", "mx-missile", "mx-missile", "synfuels-corporation-cutback", "education-spending", 
-        "superfund-right-to-sue", "crime", "duty-free-exports", "export-administration-act-south-africa"]
+COLUMNS = [
+    "political-affiliation",
+    "handicapped-infants", "water-project-cost-sharing", "adoption-of-the-budget-resolution",
+    "physician-fee-freeze", "el-salvador-aid", "religious-groups-in-schools",
+    "anti-satellite-test-ban", "aid-to-nicaraguan-contras", "mx-missile", "mx-missile",
+    "synfuels-corporation-cutback", "education-spending", "superfund-right-to-sue", "crime",
+    "duty-free-exports", "export-administration-act-south-africa"]
 df_train = pd.read_csv(train_file, names=COLUMNS, skipinitialspace=True)
 df_test = pd.read_csv(test_file, names=COLUMNS, skipinitialspace=True, skiprows=1)
 
@@ -21,11 +27,12 @@ df_test[LABEL_COLUMN] = (df_test["political-affiliation"].apply(lambda x: 1 if x
 # df_test[LABEL_COLUMN] = (df_test["crime"].apply(lambda x: 1 if x == 'y' else 0))
 
 CATEGORICAL_COLUMNS = [
-        # "political-affiliation",
-        "handicapped-infants", "water-project-cost-sharing", "adoption-of-the-budget-resolution",
-        "physician-fee-freeze", "el-salvador-aid", "religious-groups-in-schools", "anti-satellite-test-ban",
-        "aid-to-nicaraguan-contras", "mx-missile", "mx-missile", "synfuels-corporation-cutback", "education-spending", 
-        "superfund-right-to-sue", "crime", "duty-free-exports", "export-administration-act-south-africa"]
+    # "political-affiliation",
+    "handicapped-infants", "water-project-cost-sharing", "adoption-of-the-budget-resolution",
+    "physician-fee-freeze", "el-salvador-aid", "religious-groups-in-schools",
+    "anti-satellite-test-ban", "aid-to-nicaraguan-contras", "mx-missile", "mx-missile",
+    "synfuels-corporation-cutback", "education-spending", "superfund-right-to-sue", "crime",
+    "duty-free-exports", "export-administration-act-south-africa"]
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
