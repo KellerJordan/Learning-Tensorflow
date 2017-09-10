@@ -5,7 +5,7 @@ import numpy as np
 
 # model structure
 x = tf.placeholder(tf.float32)
-W1 = tf.Variable([.3], dtype=tf.float32)
+W1 = tf.Variable([.1], dtype=tf.float32)
 W2 = tf.Variable([.3], dtype=tf.float32)
 b = tf.Variable([0], dtype=tf.float32)
 # single neuron model
@@ -29,7 +29,7 @@ init = tf.global_variables_initializer()
 
 sess = tf.Session()
 sess.run(init)
-for _ in range(10000):
+for _ in range(1000):
     # print(sess.run(loss, {x: x_train}))
     sess.run(update_step, {x: x_train, alpha: 0.001})
 print(sess.run([W1[0], W2[0], b[0]]))
