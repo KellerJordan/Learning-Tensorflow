@@ -16,3 +16,4 @@
 # dtype=np.int32, np.int8, np.float32, np.float64
 
 # broadcasting - 5 * np.arange().reshape()
+# np.ones([1, 3]) * np.ones([2, 1])
