@@ -1,0 +1,1 @@
+Quick and dirty presentation given during internship at Big Data Federation. Covers reasons for progression from pure python to numpy to a framework like theano/tensorflow. Also included a short numpy syntax tutorial and an example of linear regression in Tensorflow.

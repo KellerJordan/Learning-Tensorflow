@@ -1,7 +1,7 @@
 """network.py
 Network class and helpers written while reading the http://neuralnetworksanddeeplearning.com ebook.
 
-Major differences between this and
+Differences between this and
 https://github.com/mnielsen/neural-networks-and-deep-learning/blob/master/src/network2.py
 are as follows:
 

@@ -1,3 +1,5 @@
+## a few examples of numpy syntax for me to glance at
+
 # slice comma notation
 # -1 = infer
 # ... = any number of :
