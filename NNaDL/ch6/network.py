@@ -97,5 +97,5 @@ class Network:
                     batch = dataset.train.next_batch(batch_size)
                     self.train_step.run(feed_dict={self.x: batch[0], self.y_: batch[1]})
                 if i % 1 == 0:
-                    print('step {}, training accuracy {:.3%}'.format(i, accuracy(dataset.train)))
-            print('test accuracy {:.3%}'.format(accuracy(dataset.test)))
+                    print('step {}, test accuracy {:.3%}'.format(i, accuracy(dataset.train)))
+            print('final test accuracy {:.3%}'.format(accuracy(dataset.test)))

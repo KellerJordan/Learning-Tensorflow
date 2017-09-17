@@ -32,12 +32,13 @@ def main(_):
     batch_size = 10
 
     net = Network(
-        layers=[FullyConnectedLayer(100),
+        layers=[ConvPoolLayer(20, [5, 5], [2, 2]),
+                FullyConnectedLayer(100),
                 LinearLayer(10)],
         loss=softmax_cross_entropy_loss,
         optimizer=tf.train.GradientDescentOptimizer(0.1/batch_size))
 
-    net.train(mnist, 60, 10)
+    net.train(mnist, 30, 10)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
