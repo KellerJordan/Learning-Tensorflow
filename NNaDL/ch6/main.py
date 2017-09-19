@@ -13,7 +13,7 @@ import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
 from network import Network
-from network import ConvPoolLayer, LinearLayer, FullyConnectedLayer, DropoutLayer
+from network import ConvPoolLayer, ReLULayer, LinearLayer
 from network import softmax_cross_entropy_loss
 
 
@@ -29,16 +29,19 @@ from network import softmax_cross_entropy_loss
 def main(_):
     mnist = input_data.read_data_sets(FLAGS.data_dir, one_hot=True)
 
-    batch_size = 10
+    input_dim, output_dim = 784, 10
 
     net = Network(
+        input_dim, output_dim,
         layers=[ConvPoolLayer(20, [5, 5], [2, 2]),
-                FullyConnectedLayer(100),
-                LinearLayer(10)],
-        loss=softmax_cross_entropy_loss,
-        optimizer=tf.train.GradientDescentOptimizer(0.1/batch_size))
+                ReLULayer(100),
+                LinearLayer(output_dim)],
+        loss_func=softmax_cross_entropy_loss)
 
-    net.train(mnist, 30, 10)
+    batch_size = 10
+
+    net.train(mnist, 30, batch_size,
+              optimizer=tf.train.GradientDescentOptimizer(0.1/batch_size))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

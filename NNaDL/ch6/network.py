@@ -23,13 +23,35 @@ def bias_variable(shape):
     initial = tf.constant(0.1, shape=shape)
     return tf.Variable(initial)
 
-def softmax_cross_entropy_loss(y_, y_network):
-    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_network)
-    return tf.reduce_mean(cross_entropy)
+def softmax_cross_entropy_loss(y_, y_net):
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_net)
+    return tf.reduce_sum(cross_entropy)
+
+def LinearLayer(n_out):
+    def layer(nn_input):
+        n_in = int(np.prod(nn_input.shape[1:]))
+        if len(nn_input.shape) > 2:
+            nn_input = tf.reshape(nn_input, [-1, n_in])
+        W_fc = weight_variable([n_in, n_out])
+        b_fc = bias_variable([n_out])
+        return tf.matmul(nn_input, W_fc) + b_fc
+    return layer
+
+def SigmoidLayer(n_out):
+    def layer(nn_input):
+        linear_layer = LinearLayer(n_out)
+        return tf.nn.sigmoid(linear_layer(nn_input))
+    return layer
+
+def ReLULayer(n_out):
+    def layer(nn_input):
+        linear_layer = LinearLayer(n_out)
+        return tf.nn.relu(linear_layer(nn_input))
+    return layer
 
 def ConvPoolLayer(out_channels, filter_shape, poolsize):
     def layer(nn_image):
-        # NWHC reshaping
+        # NWHC reshaping -- assumes is in NWH format already
         if len(nn_image.shape) < 4:
             nn_image = nn_image[..., None]
         in_channels = int(nn_image.shape[-1])
@@ -44,58 +66,50 @@ def ConvPoolLayer(out_channels, filter_shape, poolsize):
         return h_pool
     return layer
 
-def LinearLayer(n_out):
-    def layer(nn_input):
-        n_in = int(np.prod(nn_input.shape[1:]))
-        if len(nn_input.shape) > 2:
-            nn_input = tf.reshape(nn_input, [-1, n_in])
-        W_fc = weight_variable([n_in, n_out])
-        b_fc = bias_variable([n_out])
-        return tf.matmul(nn_input, W_fc) + b_fc
-    return layer
-
-def FullyConnectedLayer(n_out):
-    def layer(nn_input):
-        linear_layer = LinearLayer(n_out)
-        return tf.nn.relu(linear_layer(nn_input))
-    return layer
-
 def DropoutLayer(keep_prob):
     def layer(nn_input):
         return tf.nn.dropout(nn_input, keep_prob)
     return layer
 
 class Network:
-    def __init__(self, layers, loss, optimizer, keep_probs=[]):
-        self.x = tf.placeholder(tf.float32, shape=[None, 784])
-        self.y_ = tf.placeholder(tf.float32, shape=[None, 10])
+
+    def __init__(self,
+                 input_dim, output_dim, layers,
+                 loss_func, keep_probs=[]):
+
+        self.x = tf.placeholder(tf.float32, shape=[None, input_dim])
+        self.y_ = tf.placeholder(tf.float32, shape=[None, output_dim])
         self.keep_probs = keep_probs
 
         # layer pipeline
-        activations = tf.reshape(self.x, [-1, 28, 28])
+        side_len = int(np.sqrt(input_dim))
+        activations = tf.reshape(self.x, [-1, side_len, side_len])
         for layer in layers:
             activations = layer(activations)
-        y_conv = activations
+        y_net = activations
 
-        cross_entropy = loss(self.y_, y_conv)
-        self.train_step = optimizer.minimize(cross_entropy)
+        self.loss = loss_func(self.y_, y_net)
 
-        with tf.name_scope('accuracy'):
-            correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(self.y_, 1))
-            correct_prediction = tf.cast(correct_prediction, tf.float32)
-        self.accuracy = tf.reduce_mean(correct_prediction)
+        correct_prediction = tf.equal(tf.argmax(y_net, 1), tf.argmax(self.y_, 1))
+        self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-    def train(self, dataset, epochs, batch_size):
+    def train(self,
+              dataset,
+              epochs, batch_size,
+              optimizer):
+
         accuracy = lambda data: self.accuracy.eval(feed_dict={
             self.x: data.images, self.y_: data.labels,
             **{keep_prob: 1.0 for keep_prob in self.keep_probs}})
 
+        train_step = optimizer.minimize(self.loss)
+
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
             for i in range(epochs):
-                for _ in range(dataset.train.num_examples // batch_size):
-                    batch = dataset.train.next_batch(batch_size)
-                    self.train_step.run(feed_dict={self.x: batch[0], self.y_: batch[1]})
                 if i % 1 == 0:
-                    print('step {}, test accuracy {:.3%}'.format(i, accuracy(dataset.train)))
-            print('final test accuracy {:.3%}'.format(accuracy(dataset.test)))
+                    print('Epoch {}, train accuracy {:.3%}'.format(i, accuracy(dataset.train)))
+                for _ in range(dataset.train.num_examples // batch_size):
+                    batch_x, batch_y = dataset.train.next_batch(batch_size)
+                    self.train_step.run(feed_dict={self.x: batch_x, self.y_: batch_y})
+            print('Training complete, test accuracy {:.3%}'.format(accuracy(dataset.test)))
