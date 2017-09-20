@@ -37,19 +37,13 @@ def LinearLayer(n_out):
         return tf.matmul(nn_input, W_fc) + b_fc
     return layer
 
-def SigmoidLayer(n_out):
+def FullyConnectedLayer(n_out, activation_fn=tf.nn.sigmoid):
     def layer(nn_input):
         linear_layer = LinearLayer(n_out)
-        return tf.nn.sigmoid(linear_layer(nn_input))
+        return activation_fn(linear_layer(nn_input))
     return layer
 
-def ReLULayer(n_out):
-    def layer(nn_input):
-        linear_layer = LinearLayer(n_out)
-        return tf.nn.relu(linear_layer(nn_input))
-    return layer
-
-def ConvPoolLayer(out_channels, filter_shape, poolsize):
+def ConvPoolLayer(out_channels, filter_shape, poolsize, activation_fn=tf.nn.relu):
     def layer(nn_image):
         # NWHC reshaping -- assumes is in NWH format already
         if len(nn_image.shape) < 4:
@@ -59,27 +53,30 @@ def ConvPoolLayer(out_channels, filter_shape, poolsize):
         b_conv = bias_variable([out_channels])
         activations_conv = tf.nn.conv2d(nn_image, W_conv, strides=[1, 1, 1, 1],
                                         padding='SAME', data_format='NHWC')
-        h_conv = tf.nn.relu(activations_conv + b_conv)
+        h_conv = activation_fn(activations_conv + b_conv)
         pool_filter = [1]+poolsize+[1]
         h_pool = tf.nn.max_pool(h_conv, ksize=pool_filter, strides=pool_filter,
                                 padding='SAME', data_format='NHWC')
         return h_pool
     return layer
 
+# somewhat hacky solution to keeping nice syntax in main.py
+KEEP_PROBS = []
 def DropoutLayer(keep_prob):
+    keep_var = tf.Variable(keep_prob)
+    KEEP_PROBS.append(keep_var)
     def layer(nn_input):
-        return tf.nn.dropout(nn_input, keep_prob)
+        return tf.nn.dropout(nn_input, keep_var)
     return layer
 
 class Network:
 
     def __init__(self,
                  input_dim, output_dim, layers,
-                 loss_func, keep_probs=[]):
+                 loss_func):
 
         self.x = tf.placeholder(tf.float32, shape=[None, input_dim])
         self.y_ = tf.placeholder(tf.float32, shape=[None, output_dim])
-        self.keep_probs = keep_probs
 
         # layer pipeline
         side_len = int(np.sqrt(input_dim))
@@ -100,7 +97,7 @@ class Network:
 
         accuracy = lambda data: self.accuracy.eval(feed_dict={
             self.x: data.images, self.y_: data.labels,
-            **{keep_prob: 1.0 for keep_prob in self.keep_probs}})
+            **{keep_prob: 1.0 for keep_prob in KEEP_PROBS}})
 
         train_step = optimizer.minimize(self.loss)
 
@@ -111,5 +108,5 @@ class Network:
                     print('Epoch {}, train accuracy {:.3%}'.format(i, accuracy(dataset.train)))
                 for _ in range(dataset.train.num_examples // batch_size):
                     batch_x, batch_y = dataset.train.next_batch(batch_size)
-                    self.train_step.run(feed_dict={self.x: batch_x, self.y_: batch_y})
+                    train_step.run(feed_dict={self.x: batch_x, self.y_: batch_y})
             print('Training complete, test accuracy {:.3%}'.format(accuracy(dataset.test)))
