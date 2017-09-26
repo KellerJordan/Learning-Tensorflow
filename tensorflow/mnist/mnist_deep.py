@@ -71,11 +71,12 @@ def deepnn(x, keep_prob):
 def main(_):
     mnist = input_data.read_data_sets(FLAGS.data_dir, one_hot=True)
 
-    x = tf.placeholder(tf.float32, shape=[None, 784])
+    x = tf.placeholder(tf.float32, shape=[None, 784], name='input')
     y_ = tf.placeholder(tf.float32, shape=[None, 10])
 
-    keep_prob = tf.placeholder(tf.float32)
+    keep_prob = tf.placeholder(tf.float32, name='dropout')
     y_conv = deepnn(x, keep_prob)
+    net_out = tf.nn.softmax(y_conv, name='output')
 
     with tf.name_scope('loss'):
         cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv)
@@ -96,7 +97,7 @@ def main(_):
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        for i in range(20000):
+        for i in range(5000):
             batch = mnist.train.next_batch(50)
             if i % 100 == 0:
                 train_accuracy = accuracy.eval(feed_dict={
@@ -106,6 +107,9 @@ def main(_):
 
         print('test accuracy {:.3%}'.format(accuracy.eval(feed_dict={
             x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0})))
+
+        saver = tf.train.Saver()
+        saver.save(sess, '..sudoku/mnist')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
