@@ -1,3 +1,3 @@
-# ML
+# Learning-Tensorflow
 
-Repository for assorted machine learning experiments
+Repo for tutorials and experiments in tensorflow. Also contains work for NeuralNetworksandDeepLearning.com ebook.
